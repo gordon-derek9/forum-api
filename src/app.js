@@ -22,9 +22,14 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/topics", topicRoutes);
 app.use("/api/posts", postRoutes);
 
-// Test route
+// Root test route
 app.get("/", (req, res) => {
   res.json({ message: "Forum API running" });
+});
+
+// Health check route
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 const PORT = process.env.PORT || 5000;
