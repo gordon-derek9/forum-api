@@ -41,19 +41,26 @@ router.post("/register", async (req, res) => {
 });
 
 // @route   POST /api/auth/login
-// @desc    Login user + return JWT
+// @desc    Login user with USERNAME (or email fallback) + return JWT
 // @access  Public
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    // basic validation
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    // allow username OR email (username required by project spec)
+    const identifier = (username || email || "").trim();
+
+    if (!identifier || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username and password are required" });
     }
 
-    // find user by email
-    const user = await User.findOne({ email });
+    // find user by username OR email
+    const user = await User.findOne({
+      $or: [{ username: identifier }, { email: identifier }],
+    });
+
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -66,7 +73,10 @@ router.post("/login", async (req, res) => {
 
     // create JWT
     const token = jwt.sign(
-      { userId: user._id, username: user.username },
+      {
+        userId: user._id,
+        username: user.username,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
